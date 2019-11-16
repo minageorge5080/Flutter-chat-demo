@@ -15,9 +15,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Chat Demo',
       theme: ThemeData(
-        primaryColor: themeColor,
-      ),
-      home: LoginScreen(title: 'CHAT DEMO'),
+        primaryColor: themeColor,),
+      home: LoginScreen(title: "Chat demo",),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -27,6 +26,7 @@ class LoginScreen extends StatefulWidget {
   LoginScreen({Key key, this.title}) : super(key: key);
 
   final String title;
+   String title2;
 
   @override
   LoginScreenState createState() => LoginScreenState();
@@ -37,7 +37,7 @@ class LoginScreenState extends State<LoginScreen> {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   SharedPreferences prefs;
 
-  bool isLoading = false;
+  bool isLoading = true;
   bool isLoggedIn = false;
   FirebaseUser currentUser;
 
@@ -47,7 +47,10 @@ class LoginScreenState extends State<LoginScreen> {
     isSignedIn();
   }
 
+  // check if user already log in
   void isSignedIn() async {
+
+    // show loader
     this.setState(() {
       isLoading = true;
     });
@@ -56,24 +59,28 @@ class LoginScreenState extends State<LoginScreen> {
 
     isLoggedIn = await googleSignIn.isSignedIn();
     if (isLoggedIn) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => MainScreen(currentUserId: prefs.getString('id'))),
-      );
+      Navigator.push(context, MaterialPageRoute(builder: (context) => MainScreen(currentUserId: prefs.getString('id'))),);
     }
 
+    // hide loader
     this.setState(() {
       isLoading = false;
     });
+
   }
 
   Future<Null> handleSignIn() async {
+
+    // init shared pref
     prefs = await SharedPreferences.getInstance();
 
+    // show loader
     this.setState(() {
       isLoading = true;
     });
 
+
+    // google login ..
     GoogleSignInAccount googleUser = await googleSignIn.signIn();
     GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
@@ -82,15 +89,17 @@ class LoginScreenState extends State<LoginScreen> {
       idToken: googleAuth.idToken,
     );
 
+    // firebase login ...
     FirebaseUser firebaseUser = (await firebaseAuth.signInWithCredential(credential)).user;
 
+    // check user .
     if (firebaseUser != null) {
       // Check is already sign up
-      final QuerySnapshot result =
-          await Firestore.instance.collection('users').where('id', isEqualTo: firebaseUser.uid).getDocuments();
+      final QuerySnapshot result = await Firestore.instance.collection('users').where('id', isEqualTo: firebaseUser.uid).getDocuments();
       final List<DocumentSnapshot> documents = result.documents;
       if (documents.length == 0) {
         // Update data to server if new user
+
         Firestore.instance.collection('users').document(firebaseUser.uid).setData({
           'nickname': firebaseUser.displayName,
           'photoUrl': firebaseUser.photoUrl,
@@ -153,8 +162,7 @@ class LoginScreenState extends State<LoginScreen> {
 
             // Loading
             Positioned(
-              child: isLoading
-                  ? Container(
+              child: isLoading ? Container(
                       child: Center(
                         child: CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(themeColor),
